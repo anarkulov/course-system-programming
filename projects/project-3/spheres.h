@@ -92,7 +92,6 @@ __global__ static void spheres_raytrace(sphere_t* spheres, dev_size_t sphere_cou
              blockIdx, blockDim into an x and y coordinates of your image. Use
              x and y to do calculations as usual. If the x and y is outside of
              the image space, do nothing and return from the kernel right away. */
-            
             int x = blockIdx.x*blockDim.x + threadIdx.x;
             int y = blockIdx.y*blockDim.y + threadIdx.y;
 

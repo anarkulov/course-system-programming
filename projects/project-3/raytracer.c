@@ -22,8 +22,10 @@ int main(int argc, char *argv[])
     
 #ifdef __NVCC__
     /* TODO: Allocate memory for the image on the GPU device. */
-    dev_image_channel_t *tmp_data = out_image.data;
-    cudaMalloc((void**)&out_image.data, out_image.data_size);
+    image_t gpu_image;
+    gpu_image = out_image;
+    memcpy(gpu_image.data, out_image.data, out_image.data_size);
+    cudaMalloc((void**)&gpu_image.data, gpu_image.data_size);
 
 #endif
 
@@ -64,7 +66,7 @@ int main(int argc, char *argv[])
              on the GPU. The kernel will run on multiple cores and execution
              units in parallel for every pixel. */
 
-    spheres_raytrace<<<blocks, threads>>>(gpu_spheres, SPHERE_COUNT, out_image);
+    spheres_raytrace<<<blocks, threads>>>(gpu_spheres, SPHERE_COUNT, gpu_image);
 
     /* TODO: For debugging purposes, you may check for the last error with the
              `cudaGetLastError` call and the `cudaGetErrorString` call to print
@@ -78,9 +80,8 @@ int main(int argc, char *argv[])
     }
 
     /* TODO: Copy the image data from the GPU back to the CPU (`cudaMemcpy`). */
-    cudaMemcpy(tmp_data, out_image.data, out_image.data_size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(out_image.data, gpu_image.data, gpu_image.data_size, cudaMemcpyDeviceToHost);
 
-    out_image.data = tmp_data;
     /* TODO: Synchronize execution with the CPU (`cudaDeviceSynchronize`). */
     cudaDeviceSynchronize();
 
@@ -92,11 +93,10 @@ end:
 #ifdef __NVCC__
     /* TODO: Free the GPU memory (`cudaFree`). */
     cudaFree(gpu_spheres);
-    cudaFree(&tmp_data);
+    cudaFree(&gpu_image);
 #endif
 
     spheres_free(spheres);
     image_free_data(&out_image);
     return 0;
 }
-
